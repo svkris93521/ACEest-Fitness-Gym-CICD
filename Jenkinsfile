@@ -1,5 +1,10 @@
 pipeline {
     agent any
+
+    tools {
+        // Define the SonarQube Scanner tool for static code analysis
+        sonarQubeScanner "sonar-scanner"
+    }
     
     environment {
         // Defines the Docker image repository explicitly
@@ -7,7 +12,6 @@ pipeline {
         DOCKER_TAG = "${env.BUILD_ID}"
         DOCKER_CREDS_ID = "dockerhub-credentials"
         CLUSTER_ENV = "minikube"
-        'org.tool.SonarScanner' 'sonar-scanner'
     }
 
     stages {
