@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Meta Information -->
+    <div class="col-md-4">
+        <div class="card p-3 mb-3">
+            <h4 class="text-gold">{{ client['name'] }}</h4>
+            <hr>
+            <p><strong>Membership:</strong> {{ client['membership_status'] }}</p>
+            <p><strong>End Date:</strong> {{ client['membership_end'] or 'N/A' }}</p>
+            <p><strong>Program:</strong> {{ client['program'] or 'None' }}</p>
+            <p><strong>Calories:</strong> {{ client['calories'] or 'N/A' }}</p>
+            <p><strong>Age:</strong> {{ client['age'] or 'N/A' }}</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('generate_program', name=client['name']) }}">
+            <button type="submit" class="btn btn-warning w-100 mb-2">Generate AI Program</button>
+        </form>
+        <a href="{{ url_for('generate_pdf', name=client['name']) }}" class="btn btn-outline-warning w-100 mb-2">Download PDF Report</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary w-100">Back to Dashboard</a>
+    </div>
+    
+    <!-- Right Data Panel (Tabs) -->
+    <div class="col-md-8">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">Summary & Charts</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="workouts-tab" data-bs-toggle="tab" data-bs-target="#workouts" type="button" role="tab">Workouts</button>
+            </li>
+        </ul>
+        <div class="tab-content card p-3 mt-0" style="border-top: none;">
+            
+            <!-- Summary Chart Tab -->
+            <div class="tab-pane fade show active" id="summary" role="tabpanel">
+                <h5 class="text-gold mb-3">Weekly Adherence</h5>
+                <canvas id="adherenceChart" height="120"></canvas>
+            </div>
+            
+            <!-- Workouts Tab -->
+            <div class="tab-pane fade" id="workouts" role="tabpanel">
+                <h5 class="text-gold">Add Workout</h5>
+                <form method="POST" action="{{ url_for('add_workout', name=client['name']) }}" class="mb-4">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="date" name="date" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="type" class="form-control form-control-sm" required>
+                                <option value="Strength">Strength</option>
+                                <option value="Hypertrophy">Hypertrophy</option>
+                                <option value="Cardio">Cardio</option>
+                                <option value="Mobility">Mobility</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" name="duration" class="form-control form-control-sm" placeholder="Mins" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="Notes">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-warning btn-sm w-100">+</button>
+                        </div>
+                    </div>
+                </form>
+                
+                <h5 class="text-gold">Workout History</h5>
+                <table class="table table-dark table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in workouts %}
+                        <tr>
+                            <td>{{ w['date'] }}</td>
+                            <td>{{ w['workout_type'] }}</td>
+                            <td>{{ w['duration_min'] }}</td>
+                            <td>{{ w['notes'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fetch and render Chart.js Adherence chart
+    fetch("{{ url_for('get_progress', name=client['name']) }}")
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('adherenceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Adherence %',
+                        data: data.adherence,
+                        borderColor: '#d4af37',
+                        pointBackgroundColor: '#d4af37',
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        });
+</script>
+{% endblock %}

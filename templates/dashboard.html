@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Panel: Client List & Add -->
+    <div class="col-md-4">
+        <h4 class="text-gold">Clients</h4>
+        <div class="card p-3 mb-3">
+            <ul class="list-group list-group-flush bg-dark text-white">
+                {% for c in clients %}
+                <li class="list-group-item bg-dark">
+                    <a href="{{ url_for('client_details', name=c) }}" class="text-white text-decoration-none">{{ c }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <h5 class="text-gold">Add / Save Client</h5>
+        <div class="card p-3">
+            <form method="POST" action="{{ url_for('add_client') }}">
+                <input type="text" name="name" class="form-control mb-2" placeholder="Client Name" required>
+                <button type="submit" class="btn btn-warning w-100">Save</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Right Panel: Welcome / Graph placeholder -->
+    <div class="col-md-8">
+        <div class="card p-5 text-center">
+            <h2 class="text-gold">Select a Client</h2>
+            <p>Select a client from the left menu to view options for generating AI programs, adding workouts, viewing membership status, and downloading the PDF reports.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
