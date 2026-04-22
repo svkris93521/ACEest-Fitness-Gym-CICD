@@ -36,13 +36,10 @@ pipeline {
 
         stage('SonarQube Code Analysis') {
             steps {
+                // Requires SonarQube Scanner plugin and configuration in Jenkins
                 echo "Executing SonarQube static code analysis..."
-                // This 'scannerHome' logic finds where Jenkins installed the tool
-                script {
-                    def scannerHome = tool 'sonar-scanner' // Matches name in Global Tool Config
-                    withSonarQubeEnv('sonarqube-server') {
-                        sh "${scannerHome}/bin/sonar-scanner"
-                    }
+                withSonarQubeEnv('sonarqube-server') {
+                    sh 'sonar-scanner'
                 }
             }
         }
