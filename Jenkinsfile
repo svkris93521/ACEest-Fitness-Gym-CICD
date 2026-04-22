@@ -34,16 +34,6 @@ pipeline {
             }
         }
 
-        '''stage('SonarQube Code Analysis') {
-            steps {
-                // Requires SonarQube Scanner plugin and configuration in Jenkins
-                echo "Executing SonarQube static code analysis..."
-                withSonarQubeEnv('sonarqube-server') {
-                    sh 'sonar-scanner'
-                }
-            }
-        }'''
-
         stage('SonarQube Code Analysis') {
             steps {
                 echo "Executing SonarQube static code analysis..."
