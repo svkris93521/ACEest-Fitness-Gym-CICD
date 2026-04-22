@@ -7,6 +7,7 @@ pipeline {
         DOCKER_TAG = "${env.BUILD_ID}"
         DOCKER_CREDS_ID = "dockerhub-credentials"
         CLUSTER_ENV = "minikube"
+        'org.tool.SonarScanner' 'sonar-scanner'
     }
 
     stages {
