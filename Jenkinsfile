@@ -38,12 +38,10 @@ pipeline {
             steps {
                 echo "Executing SonarQube static code analysis..."
                 script {
-                    // This finds the installation path of the tool named 'sonar-scanner'
-                    // in your Global Tool Configuration.
-                    def scannerHome = tool name: 'sonar-scanner', type: 'org.tool.SonarScanner'
+                    // This version is less 'picky' about the internal ID
+                    def scannerHome = tool 'sonar-scanner' 
                     
                     withSonarQubeEnv('sonarqube-server') {
-                        // Use the full path to the binary
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
