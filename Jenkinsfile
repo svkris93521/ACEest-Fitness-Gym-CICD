@@ -1,10 +1,5 @@
 pipeline {
     agent any
-
-    tools {
-        // Define the SonarQube Scanner tool for static code analysis
-        "sonar-scanner" "sonar-scanner"
-    }
     
     environment {
         // Defines the Docker image repository explicitly
@@ -41,10 +36,16 @@ pipeline {
 
         stage('SonarQube Code Analysis') {
             steps {
-                // Requires SonarQube Scanner plugin and configuration in Jenkins
                 echo "Executing SonarQube static code analysis..."
-                withSonarQubeEnv('sonarqube-server') {
-                    sh 'sonar-scanner'
+                script {
+                    // This finds the installation path of the tool named 'sonar-scanner'
+                    // in your Global Tool Configuration.
+                    def scannerHome = tool name: 'sonar-scanner', type: 'org.tool.SonarScanner'
+                    
+                    withSonarQubeEnv('sonarqube-server') {
+                        // Use the full path to the binary
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
                 }
             }
         }
