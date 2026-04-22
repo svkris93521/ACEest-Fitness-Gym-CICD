@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         // Define the SonarQube Scanner tool for static code analysis
-        sonarQubeScanner "sonar-scanner"
+        "sonar-scanner" "sonar-scanner"
     }
     
     environment {
