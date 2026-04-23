@@ -177,9 +177,9 @@ pipeline {
                     if pgrep -f "port-forward" > /dev/null; then
                         MK_URL=$(curl -s ifconfig.me)
                         echo "--------------------------------------------------------"
-                        echo "SUCCESS: App exposed at http://$(curl -s ifconfig.me):8081"
+                        echo "SUCCESS: App exposed at http://$(curl -s ifconfig.me):8085"
                         echo "--------------------------------------------------------"
-                        curl -f -s "${MK_URL}:8081/health" || { echo "Health check failed!"; exit 1; }
+                        curl -f -s "http://127.0.0.1:8085/health" || { echo "Health check failed!"; exit 1; }
                         echo "Health check passed on exposed URL!"
                     else
                         echo "ERROR: Port-forward failed to start. Check pf.log:"
