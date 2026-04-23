@@ -1,17 +1,32 @@
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.pytest_cache/
-aceest_fitness.db
-.git
-.gitignore
-k8s/
-Jenkinsfile
+
+# aceest_fitness.db
+#.git
+#.gitignore
+#k8s/
+#Jenkinsfile
 sonar-project.properties
 *.log
 *.pdf
 *.db
+
+
+# Git metadata (Safe and saves space)
+.git
+.gitignore
+
+# Python artifacts (Crucial to prevent path conflicts)
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+venv/
+.pytest_cache/
+
+# Jenkins & SonarQube temporary files
+.scannerwork/
+reports/
+pf.log
+
+# Sensitive Info
+.env
+dockerhub-credentials
