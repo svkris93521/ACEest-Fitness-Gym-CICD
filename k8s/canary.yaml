@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-fitness-canary
+  labels:
+    app: aceest-fitness
+    track: canary
+spec:
+  # Only 1 replica for canary to take a fraction of the request load
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-fitness
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: aceest-fitness
+        track: canary
+    spec:
+      containers:
+      - name: aceest-fitness-app
+        image: svkris93521/aceest-fitness:v2.0-canary
+        ports:
+        - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5

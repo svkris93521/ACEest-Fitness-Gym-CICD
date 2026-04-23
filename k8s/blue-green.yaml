@@ -1,0 +1,50 @@
+---
+# Blue-Green Deployment Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-fitness-green
+  labels:
+    app: aceest-fitness
+    # Indicates this is the 'new' version
+    version: v2.0
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aceest-fitness
+      version: v2.0
+  template:
+    metadata:
+      labels:
+        app: aceest-fitness
+        version: v2.0
+    spec:
+      containers:
+      - name: aceest-fitness-app
+        image: svkris93521/aceest-fitness:v2.0
+        ports:
+        - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+
+---
+# Switch the service to target only the 'green' (v2.0) deployment
+# Replace the selector in the regular service to perform the switch.
+apiVersion: v1
+kind: Service
+metadata:
+  name: aceest-fitness-service-bg
+spec:
+  type: LoadBalancer
+  selector:
+    app: aceest-fitness
+    # Updating this to v2.0 switches traffic from Blue to Green
+    version: v2.0
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000

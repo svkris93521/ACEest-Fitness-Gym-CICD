@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aceest-fitness-service
+  labels:
+    app: aceest-fitness
+spec:
+  type: LoadBalancer  # For cloud, natively provisions LB. Use NodePort for Minikube if needed.
+  selector:
+    app: aceest-fitness
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000

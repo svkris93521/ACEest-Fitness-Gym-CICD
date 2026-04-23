@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application source
 COPY ACEest_Fitness.py .
 
-# Expose port 9050 for Flask
-EXPOSE 9050
+# Expose port 5000 for Flask
+EXPOSE 5000
 
 # Use gunicorn for production grade deployment
-CMD ["gunicorn", "--bind", "0.0.0.0:9050", "ACEest_Fitness:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "ACEest_Fitness:app"]
