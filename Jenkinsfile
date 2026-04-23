@@ -117,7 +117,7 @@ pipeline {
         }
     }
 
-    # Test if the application is running correctly in the cluster (optional)
+    // Test if the application is running correctly in the cluster (optional)
     stage('Integration Testing') {
         steps {
             echo "Running integration tests against the deployed application..."
