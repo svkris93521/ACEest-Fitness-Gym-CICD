@@ -75,15 +75,25 @@ pipeline {
             }
         }
 
-        stage('Kubernetes Deploy - Rolling Update') {
+        stage('Kubernetes Deploy') {
             steps {
-                echo "Deploying to Kubernetes using Rolling Update strategy..."
-                // Ensure kubectl context is properly set to Minikube or Cloud provider
-                sh '''
-                sed -i "s|DOCKER_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g" k8s/deployment.yaml
-                kubectl apply -f k8s/deployment.yaml
-                kubectl apply -f k8s/service.yaml
-                '''
+                script {
+                    sh '''
+                    # 1. Download the kubectl binary into the current workspace
+                    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                    
+                    # 2. Make it executable
+                    chmod +x ./kubectl
+                    
+                    # 3. Use the local binary (./kubectl) instead of the system one
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    
+                    sed -i "s|DOCKER_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g" k8s/deployment.yaml
+                    
+                    ./kubectl apply -f k8s/deployment.yaml
+                    ./kubectl apply -f k8s/service.yaml
+                    '''
+                }
             }
         }
     }
