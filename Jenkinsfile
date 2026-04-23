@@ -3,9 +3,9 @@ pipeline {
     
     environment {
         // Defines the Docker image repository explicitly
-        DOCKER_IMAGE = "svkris93521/aceest-fitness"
+        DOCKER_IMAGE = "svkris/aceest-fitness"
         DOCKER_TAG = "${env.BUILD_ID}"
-        DOCKER_CREDS_ID = "dockerhub-credentials"
+        DOCKER_CREDS_ID = "dckr_pat_5ebuhgjE95E9kLP-tSWB72foq94"
         CLUSTER_ENV = "minikube"
     }
 
