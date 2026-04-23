@@ -157,35 +157,42 @@ pipeline {
             }
         }
 
-        stage('Expose Application') {
+        stage('Expose Application (Docker Direct)') {
             steps {
                 script {
                     sh '''
-                    # 1. Kill any old forwards
-                    pkill -f "port-forward" || true
+                    # 1. Stop and remove any existing container to free up the port
+                    echo "Cleaning up old containers..."
+                    docker rm -f aceest-fitness-app || true
                     
-                    # 2. Crucial: Tell Jenkins NOT to kill background processes after the stage
-                    export JENKINS_NODE_COOKIE=dontKillMe
-                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    # 2. Pull the latest image you just pushed to Docker Hub
+                    echo "Pulling image from Docker Hub: ${DOCKER_IMAGE}:latest"
+                    docker pull ${DOCKER_IMAGE}:latest
                     
-                    # 3. Use the LOCAL ./kubectl we downloaded in the earlier stage
-                    # Change 80 to 5000 or 8000 if your Flask/Django app uses those!
-                    nohup ./kubectl port-forward svc/aceest-fitness-service 8085:80 --address 0.0.0.0 > pf.log 2>&1 &
+                    # 3. Run the container directly on the VM
+                    # -p 8085:5000 maps Host Port 8085 to Container Port 5000
+                    echo "Starting container..."
+                    docker run -d \
+                        --name aceest-fitness-app \
+                        -p 8085:5000 \
+                        ${DOCKER_IMAGE}:latest
                     
-                    # 4. Wait and verify it actually stayed alive
-                    sleep 5
-                    if pgrep -f "port-forward" > /dev/null; then
-                        MK_URL=$(curl -s ifconfig.me)
-                        echo "--------------------------------------------------------"
-                        echo "SUCCESS: App exposed at http://$(curl -s ifconfig.me):8085"
-                        echo "--------------------------------------------------------"
-                        curl -f -s "http://127.0.0.1:8085/health" || { echo "Health check failed!"; exit 1; }
-                        echo "Health check passed on exposed URL!"
-                    else
-                        echo "ERROR: Port-forward failed to start. Check pf.log:"
-                        cat pf.log
-                        exit 1
-                    fi
+                    # 4. Wait for Gunicorn to boot up
+                    sleep 10
+                    
+                    # 5. Internal Health Check
+                    echo "Verifying local connectivity..."
+                    curl -f -s "http://127.0.0.1:8085/health" || { 
+                        echo "Container health check failed! Logs:"; 
+                        docker logs aceest-fitness-app; 
+                        exit 1; 
+                    }
+                    
+                    PUBLIC_IP=$(curl -s ifconfig.me)
+                    echo "--------------------------------------------------------"
+                    echo "SUCCESS: App exposed via Docker Hub Image"
+                    echo "URL: http://${PUBLIC_IP}:8085"
+                    echo "--------------------------------------------------------"
                     '''
                 }
             }
