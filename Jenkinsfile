@@ -156,6 +156,25 @@ pipeline {
                 '''
             }
         }
+
+        stage('Expose Application') {
+            steps {
+                script {
+                    sh '''
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    pkill -f "port-forward" || true
+                    
+                    # Ensure port 8081 is open on your VM Firewall!
+                    nohup ./kubectl port-forward svc/aceest-fitness-service 8081:80 --address 0.0.0.0 > pf.log 2>&1 &
+                    
+                    sleep 5
+                    echo "--------------------------------------------------------"
+                    echo "ACCESS YOUR APP AT: http://$(curl -s ifconfig.me):8081"
+                    echo "--------------------------------------------------------"
+                    '''
+                }
+            }
+        }
     }
     
     post {
