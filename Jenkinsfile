@@ -116,6 +116,22 @@ pipeline {
             }
         }
     }
+
+    # Test if the application is running correctly in the cluster (optional)
+    stage('Integration Testing') {
+        steps {
+            echo "Running integration tests against the deployed application..."
+            sh '''
+            # Wait for the application to be ready (simple sleep or implement a more robust wait)
+            sleep 30
+            # Run integration tests (this is a placeholder, implement actual tests)
+            # For example, you could use curl to hit the service endpoint and check responses
+            curl -s http://$(./minikube ip):$(./kubectl get svc aceest-service -o jsonpath='{.spec.ports[0].nodePort}')/health || exit 1
+            #print the url for manual testing
+            echo "Application URL: http://$(./minikube ip):$(./kubectl get svc aceest-service -o jsonpath='{.spec.ports[0].nodePort}')"
+            '''
+        }
+    }
     
     post {
         success {
