@@ -121,13 +121,38 @@ pipeline {
             steps {
                 echo "Running integration tests against the deployed application..."
                 sh '''
-                # Wait for the application to be ready (simple sleep or implement a more robust wait)
-                sleep 30
-                # Run integration tests (this is a placeholder, implement actual tests)
-                # For example, you could use curl to hit the service endpoint and check responses
-                curl -s http://$(./minikube ip):$(./kubectl get svc aceest-service -o jsonpath='{.spec.ports[0].nodePort}')/health || exit 1
-                #print the url for manual testing
-                echo "Application URL: http://$(./minikube ip):$(./kubectl get svc aceest-service -o jsonpath='{.spec.ports[0].nodePort}')"
+                # 1. Ensure we are using the right config
+                export KUBECONFIG=/var/lib/jenkins/.kube/config
+                
+                # 2. Define the service name (UPDATE THIS to match your k8s/service.yaml)
+                SERVICE_NAME="aceest-fitness-service"
+
+                # 3. Wait for the service to actually appear in K8s
+                echo "Waiting for ${SERVICE_NAME} to be available..."
+                MAX_RETRIES=10
+                COUNT=0
+                while ! ./kubectl get svc $SERVICE_NAME >/dev/null 2>&1; do
+                    if [ $COUNT -eq $MAX_RETRIES ]; then
+                    echo "Error: Service $SERVICE_NAME not found after waiting."
+                    exit 1
+                    fi
+                    echo "Service not found yet, retrying in 10s..."
+                    sleep 10
+                    COUNT=$((COUNT + 1))
+                done
+
+                # 4. Get the URL and Port
+                MINIKUBE_IP=$(./minikube ip)
+                NODE_PORT=$(./kubectl get svc $SERVICE_NAME -o jsonpath='{.spec.ports[0].nodePort}')
+                APP_URL="http://${MINIKUBE_IP}:${NODE_PORT}"
+
+                echo "Application URL: ${APP_URL}"
+
+                # 5. Run the actual health check
+                # -f makes curl fail on 4xx/5xx errors, -s is silent
+                curl -f -s "${APP_URL}/health" || { echo "Health check failed!"; exit 1; }
+                
+                echo "Integration Test Passed!"
                 '''
             }
         }
