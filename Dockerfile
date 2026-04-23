@@ -14,7 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ACEest_Fitness.py .
 COPY run_ace.py .
 COPY templates/ ./templates/
-COPY static/ ./static/
 COPY k8s/ ./k8s/
 COPY aceest_fitness.db .
 COPY requirements.txt .
