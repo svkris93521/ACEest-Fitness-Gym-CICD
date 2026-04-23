@@ -161,16 +161,28 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    # 1. Kill any old forwards
                     pkill -f "port-forward" || true
                     
-                    # Ensure port 8081 is open on your VM Firewall!
+                    # 2. Crucial: Tell Jenkins NOT to kill background processes after the stage
+                    export JENKINS_NODE_COOKIE=dontKillMe
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    
+                    # 3. Use the LOCAL ./kubectl we downloaded in the earlier stage
+                    # Change 80 to 5000 or 8000 if your Flask/Django app uses those!
                     nohup ./kubectl port-forward svc/aceest-fitness-service 8081:80 --address 0.0.0.0 > pf.log 2>&1 &
                     
+                    # 4. Wait and verify it actually stayed alive
                     sleep 5
-                    echo "--------------------------------------------------------"
-                    echo "ACCESS YOUR APP AT: http://$(curl -s ifconfig.me):8081"
-                    echo "--------------------------------------------------------"
+                    if pgrep -f "port-forward" > /dev/null; then
+                        echo "--------------------------------------------------------"
+                        echo "SUCCESS: App exposed at http://$(curl -s ifconfig.me):8081"
+                        echo "--------------------------------------------------------"
+                    else
+                        echo "ERROR: Port-forward failed to start. Check pf.log:"
+                        cat pf.log
+                        exit 1
+                    fi
                     '''
                 }
             }
