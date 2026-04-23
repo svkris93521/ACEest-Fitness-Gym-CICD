@@ -2,8 +2,6 @@
 *.pyc
 # ignore pdf files
 *.pdf
-# ignore db files
-*.db
 # ignore log files*.log
 *.log
 # ignore __pycache__ directories

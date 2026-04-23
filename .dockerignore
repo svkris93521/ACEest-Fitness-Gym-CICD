@@ -7,7 +7,6 @@
 sonar-project.properties
 *.log
 *.pdf
-*.db
 
 
 # Git metadata (Safe and saves space)
