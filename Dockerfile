@@ -9,7 +9,16 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application source
-COPY . .
+#COPY . .
+# copy indidividual files and directories to avoid copying unnecessary files
+COPY ACEest_Fitness.py .
+COPY run_ace.py .
+COPY templates/ ./templates/
+COPY static/ ./static/
+COPY k8s/ ./k8s/
+COPY aceest_fitness.db .
+COPY requirements.txt .
+
 
 # Expose port 5000 for Flask
 EXPOSE 5000
