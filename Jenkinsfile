@@ -90,8 +90,8 @@ pipeline {
                     
                     sed -i "s|DOCKER_IMAGE_PLACEHOLDER|${DOCKER_IMAGE}:${DOCKER_TAG}|g" k8s/deployment.yaml
                     
-                    ./kubectl apply -f k8s/deployment.yaml
-                    ./kubectl apply -f k8s/service.yaml
+                    ./kubectl apply -f k8s/deployment.yaml --validate=false
+                    ./kubectl apply -f k8s/service.yaml --validate=false
                     '''
                 }
             }
