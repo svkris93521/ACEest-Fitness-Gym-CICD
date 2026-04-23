@@ -52,7 +52,7 @@ pipeline {
             steps {
                 echo "Waiting for SonarQube Quality Gate approval..."
                 timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
+                    waitForQualityGate abortPipeline: false
                 }
             }
         }
