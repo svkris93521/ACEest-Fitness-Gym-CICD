@@ -170,7 +170,7 @@ pipeline {
                     
                     # 3. Use the LOCAL ./kubectl we downloaded in the earlier stage
                     # Change 80 to 5000 or 8000 if your Flask/Django app uses those!
-                    nohup ./kubectl port-forward svc/aceest-fitness-service 9000:5000 --address 0.0.0.0 > pf.log 2>&1 &
+                    nohup ./kubectl port-forward svc/aceest-fitness-service 8081:80 --address 0.0.0.0 > pf.log 2>&1 &
                     
                     # 4. Wait and verify it actually stayed alive
                     sleep 5
