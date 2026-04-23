@@ -175,9 +175,12 @@ pipeline {
                     # 4. Wait and verify it actually stayed alive
                     sleep 5
                     if pgrep -f "port-forward" > /dev/null; then
+                        MK_URL=$(curl -s ifconfig.me)
                         echo "--------------------------------------------------------"
                         echo "SUCCESS: App exposed at http://$(curl -s ifconfig.me):8081"
                         echo "--------------------------------------------------------"
+                        curl -f -s "${MK_URL}:8081/health" || { echo "Health check failed!"; exit 1; }
+                        echo "Health check passed on exposed URL!"
                     else
                         echo "ERROR: Port-forward failed to start. Check pf.log:"
                         cat pf.log
