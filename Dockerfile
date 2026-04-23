@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application source
-COPY ACEest_Fitness.py .
+COPY . .
 
 # Expose port 5000 for Flask
 EXPOSE 5000
