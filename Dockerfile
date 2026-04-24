@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application source
 #COPY . .
-# copy indidividual files and directories to avoid copying unnecessary files
+# copy individual files and directories to avoid copying unnecessary files
 COPY ACEest_Fitness.py .
 COPY run_ace.py .
 COPY templates/ ./templates/
