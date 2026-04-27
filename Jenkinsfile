@@ -34,7 +34,12 @@ pipeline {
                     def scannerHome = tool 'sonar-scanner' 
                     
                     withSonarQubeEnv('sonarqube-server') {
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.exclusions=**/*.js,**/*.ts,**/*.css"
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.sources=. \
+                        -Dsonar.tests=tests \
+                        -Dsonar.exclusions=tests/**,**/*.js,**/*.ts,**/*.css
+                        """
                     }
                 }
             }
