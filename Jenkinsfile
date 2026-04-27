@@ -18,9 +18,6 @@ pipeline {
         }
 
         stage('Unit Tests') {
-            agent {
-                docker { image 'python:3.10-slim' }
-            }
         steps {
                 // Use 'sh' to verify python3 is there first
                 sh 'python3 --version' 
