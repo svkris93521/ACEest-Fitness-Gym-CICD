@@ -32,14 +32,17 @@ pipeline {
                 script {
                     // This version is less 'picky' about the internal ID
                     def scannerHome = tool 'sonar-scanner' 
-                    def nodePath = "/usr/local/bin/node"
+                    //def nodePath = "/usr/local/bin/node"
                     
                     withSonarQubeEnv('sonarqube-server') {
                         sh """
                         ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.sources=. \
                         -Dsonar.tests=tests \
-                        -Dsonar.exclusions=tests/**,**/*.js,**/*.ts,**/*.css
+                        -Dsonar.exclusions=tests/**,**/*.js,**/*.ts,**/*.css,**/*.html \
+                        -Dsonar.language.js.skip=true \
+                        -Dsonar.language.ts.skip=true \
+                        -Dsonar.language.css.skip=true
                         """
                     }
                 }
