@@ -21,7 +21,7 @@ pipeline {
             steps {
                 echo "Running unit tests using Pytest..."
                 sh '''
-                python -m venv venv
+                python3 -m venv venv
                 . venv/bin/activate
                 pip install -r requirements.txt
                 pytest tests/ --junitxml=reports/test-report.xml
