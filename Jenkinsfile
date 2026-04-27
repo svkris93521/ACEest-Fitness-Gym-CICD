@@ -17,8 +17,7 @@ pipeline {
             }
         }
 
-        stages {
-            stage('Unit Tests') {
+        stage('Unit Tests') {
             agent {
                 docker { image 'python:3.10-slim' }
             }
