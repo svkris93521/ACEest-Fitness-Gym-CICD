@@ -18,14 +18,14 @@ pipeline {
         }
 
         stage('Unit Testing') {
+            stage('Unit Tests') {
+            agent {
+                docker { image 'python:3.10-slim' }
+            }
             steps {
-                echo "Running unit tests using Pytest..."
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install -r requirements.txt
-                pytest tests/ --junitxml=reports/test-report.xml
-                '''
+                sh 'python3 -m venv venv'
+                sh '. venv/bin/activate && pip install -r requirements.txt'
+                sh '. venv/bin/activate && pytest --junitxml=results.xml'
             }
             post {
                 always {
