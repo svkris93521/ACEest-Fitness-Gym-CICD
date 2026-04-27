@@ -21,18 +21,14 @@ pipeline {
             agent {
                 docker { image 'python:3.10-slim' }
             }
-            steps {
+        steps {
+                // Use 'sh' to verify python3 is there first
+                sh 'python3 --version' 
                 sh 'python3 -m venv venv'
                 sh '. venv/bin/activate && pip install -r requirements.txt'
                 sh '. venv/bin/activate && pytest --junitxml=results.xml'
             }
-            post {
-                always {
-                    junit 'reports/test-report.xml'
-                }
-            }
         }
-
         stage('SonarQube Code Analysis') {
             steps {
                 echo "Executing SonarQube static code analysis..."
