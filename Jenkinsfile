@@ -99,27 +99,20 @@ pipeline {
             }
         }
         stage('Deploy to Minikube') {
-            agent {
-                docker {
-                    // This image comes pre-loaded with kubectl
-                    image 'bitnami/kubectl:latest'
-                    // We tell this container to use the host's network to find Minikube
-                    args '--network host -u 0'
-                }
-            }
             steps {
                 script {
-                    // We pass the Minikube credentials as a secret or file 
-                    // BUT, a simpler way for local dev is to point to the host IP
-                    sh "kubectl config set-cluster minikube --server=https://host.docker.internal:8443 --insecure-skip-tls-verify"
-                    sh "kubectl config set-context minikube --cluster=minikube"
-                    sh "kubectl config use-context minikube"
-
-                    echo "Testing connection..."
-                    sh "kubectl get nodes"
+                    echo "Using a temporary container to run kubectl..."
                     
-                    echo "Applying Blue-Green Strategy..."
-                    sh "kubectl apply -f k8s/blue-green.yaml"
+                    // We run kubectl inside a container via the shell
+                    // --net=host allows it to see host.docker.internal (your Mac)
+                    sh """
+                        docker run --rm --net=host \
+                        -v ${HOME}/.kube:/root/.kube:ro \
+                        bitnami/kubectl:latest \
+                        --server=https://host.docker.internal:8443 \
+                        --insecure-skip-tls-verify \
+                        get nodes
+                    """
                 }
             }
         }
