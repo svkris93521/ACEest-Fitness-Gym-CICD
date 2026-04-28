@@ -106,21 +106,26 @@ pipeline {
                     script {
                         def k8sServer = "https://host.docker.internal:8443"
 
+                        // 1. Capture the manifest content into a Groovy variable
                         def manifestContent = sh(
                             script: "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml",
                             returnStdout: true
                         ).trim()
 
-                        echo "==> Deploying Green Version (Streaming YAML)..."
-
+                        echo "==> Deploying Green Version..."
+                        
+                        // 2. The Solution:
+                        // - We pass the Kubeconfig content into an ENV variable.
+                        // - We use a shell trick inside the container to treat that ENV as a file.
+                        // - We pipe the Manifest (the Deployment) as the standard input.
                         sh """
                             echo '${manifestContent}' | docker run --rm -i --net=host \
-                            -e KUBECONFIG_DATA="\$(cat ${KUBECONFIG_FILE})" \
+                            -e KUBE_DATA="\$(cat ${KUBECONFIG_FILE})" \
                             bitnami/kubectl:latest \
-                            --kubeconfig=/dev/stdin \
+                            --kubeconfig=/dev/shm/config \
                             --server=${k8sServer} \
                             --insecure-skip-tls-verify \
-                            apply -f -
+                            sh -c "echo \"\$KUBE_DATA\" > /dev/shm/config && kubectl apply -f -"
                         """
 
                         echo "==> Checking Status..."
