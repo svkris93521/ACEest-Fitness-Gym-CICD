@@ -107,7 +107,8 @@ pipeline {
                         def k8sServer = "https://host.docker.internal:8443"
                         
                         // 1. Prepare YAML
-                        sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml"
+                        sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' ${WORKSPACE}/k8s/blue-green.yaml > ${WORKSPACE}/k8s/green-active.yaml"
+                        sh "ls -l ${WORKSPACE}/k8s/green-active.yaml"
 
                         echo "==> Deploying via Stdin Pipe (Bypassing Mounts)..."
                         // We use '-' as the filename for kubeconfig to tell kubectl to read from stdin
