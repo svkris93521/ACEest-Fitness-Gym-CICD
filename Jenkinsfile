@@ -98,8 +98,27 @@ pipeline {
                 }
             }
         }
+        stage('Blue-Green Switch') {
+            steps {
+                script {
+                    echo "Deploying Green environment..."
+                    // Inject the version tag into the deployment file
+                    sh "sed -i 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml"
+                    sh "kubectl apply -f k8s/blue-green.yaml"
+
+                    // Wait for Green pods to pass readiness probes
+                    sh "kubectl rollout status deployment/aceest-fitness-green"
+
+                    // THE SWITCH: Patch the service selector to point to green
+                    echo "Promoting Green to Production..."
+                    sh "kubectl patch svc aceest-fitness-service -p '{\"spec\":{\"selector\":{\"env\":\"green\"}}}'"
+                    
+                    echo "Deployment successful. To rollback, patch back to 'blue'."
+                }
+            }
+        }
     }
-    
+
     post {
         success {
             echo "CI/CD Pipeline executed successfully!"
