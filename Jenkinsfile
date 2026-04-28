@@ -113,8 +113,7 @@ pipeline {
                     echo "==> Deploying Green Version..."
                     sh """
                         docker run --rm --net=host \
-                        -v ${HOME}/.kube:/root/.kube:ro \
-                        -v ${HOME}/.minikube:${HOME}/.minikube:ro \
+                        -v ${WORKSPACE}/k8s/kubeconfig:/tmp/config \
                         bitnami/kubectl:latest \
                         --server=${k8sServer} \
                         --insecure-skip-tls-verify \
@@ -125,8 +124,7 @@ pipeline {
                     echo "==> Waiting for Green pods to pass health checks..."
                     sh """
                         docker run --rm --net=host \
-                        -v ${HOME}/.kube:/root/.kube:ro \
-                        -v ${HOME}/.minikube:${HOME}/.minikube:ro \
+                        -v ${WORKSPACE}/k8s/kubeconfig:/tmp/config \
                         bitnami/kubectl:latest \
                         --server=${k8sServer} \
                         --insecure-skip-tls-verify \
@@ -140,8 +138,7 @@ pipeline {
                     echo "==> Switching production traffic to Green..."
                     sh """
                         docker run --rm --net=host \
-                        -v ${HOME}/.kube:/root/.kube:ro \
-                        -v ${HOME}/.minikube:${HOME}/.minikube:ro \
+                        -v ${WORKSPACE}/k8s/kubeconfig:/tmp/config \
                         bitnami/kubectl:latest \
                         --server=${k8sServer} \
                         --insecure-skip-tls-verify \
