@@ -105,12 +105,12 @@ pipeline {
                 script {
                     def k8sServer = "https://host.docker.internal:8443"
                     
-                    echo "==> Preparing Green Deployment with Tag: ${DOCKER_TAG}"
+                    // 1. Prepare the dynamic YAML
                     sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml"
 
-                    // 1. Deploy the Green Version
-                    // Note: We mount the whole 'k8s' folder to '/tmp/k8s' so we can access config and yaml
-                    echo "==> Deploying Green Version..."
+                    echo "==> Deploying to Minikube..."
+                    // We mount the WHOLE k8s folder. 
+                    // This ensures the file 'kubeconfig' inside it is treated as a file.
                     sh """
                         docker run --rm --net=host \
                         -v ${WORKSPACE}/k8s:/tmp/k8s \
@@ -121,8 +121,7 @@ pipeline {
                         apply -f /tmp/k8s/green-active.yaml
                     """
 
-                    // 2. Wait for Readiness
-                    echo "==> Waiting for Green pods to pass health checks..."
+                    echo "==> Waiting for Health Checks..."
                     sh """
                         docker run --rm --net=host \
                         -v ${WORKSPACE}/k8s:/tmp/k8s \
@@ -132,11 +131,10 @@ pipeline {
                         --insecure-skip-tls-verify \
                         rollout status deployment/aceest-fitness-green
                     """
+                    
+                    input message: "Green version is healthy. Switch traffic?", ok: "Promote"
 
-                    input message: "Green version is healthy. Switch production traffic?", ok: "Promote"
-
-                    // 3. THE SWITCH
-                    echo "==> Switching production traffic to Green..."
+                    echo "==> Switching traffic to Green..."
                     sh """
                         docker run --rm --net=host \
                         -v ${WORKSPACE}/k8s:/tmp/k8s \
@@ -146,8 +144,6 @@ pipeline {
                         --insecure-skip-tls-verify \
                         patch svc aceest-fitness-service -p '{\"spec\":{\"selector\":{\"env\":\"green\"}}}'
                     """
-                    
-                    echo "==> Blue-Green Promotion Successful!"
                 }
             }
         }
