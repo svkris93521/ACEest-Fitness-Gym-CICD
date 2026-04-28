@@ -3,10 +3,13 @@ pipeline {
     
     environment {
         // Defines the Docker image repository explicitly
-        DOCKER_IMAGE = "svkris/aceest-fitness"
+        DOCKER_IMAGE = "aceest-fitness-gym-cicd"
         DOCKER_TAG = "${env.BUILD_ID}"
         DOCKER_CREDS_ID = "dockerhub-credentials" // Jenkins credentials ID for Docker Hub
         CLUSTER_ENV = "minikube"
+        // Force Python to not write .pyc files and buffer output for cleaner logs
+        PYTHONDONTWRITEBYTECODE = 1
+        PYTHONUNBUFFERED = 1
     }
 
     stages {
@@ -58,10 +61,14 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+        stage('Docker Image Assembly') {
             steps {
-                echo "Building Docker Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                echo "==> Building Docker image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} -t ${DOCKER_IMAGE}:latest ."
+                
+                echo "==> Verifying Docker image..."
+                sh "docker images ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                sh "docker images ${DOCKER_NAME}"
             }
         }
 
