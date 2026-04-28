@@ -102,39 +102,46 @@ pipeline {
         stage('Deploy: Blue-Green') {
             agent any
             steps {
-                // This pulls the secret we just created and places it in a temp path
                 withCredentials([file(credentialsId: 'kubeconfig-secret', variable: 'KUBECONFIG_FILE')]) {
                     script {
                         def k8sServer = "https://host.docker.internal:8443"
                         
-                        // Prepare the dynamic YAML
+                        // 1. Prepare YAML
                         sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml"
 
-                        echo "==> Deploying to Minikube..."
+                        echo "==> Deploying via Stdin Pipe (Bypassing Mounts)..."
+                        // We use '-' as the filename for kubeconfig to tell kubectl to read from stdin
                         sh """
-                            docker run --rm --net=host \
-                            -v ${KUBECONFIG_FILE}:/tmp/kubeconfig \
+                            cat ${KUBECONFIG_FILE} | docker run --rm -i --net=host \
                             -v ${WORKSPACE}/k8s:/tmp/k8s \
                             bitnami/kubectl:latest \
-                            --kubeconfig=/tmp/kubeconfig \
+                            --kubeconfig=/dev/stdin \
                             --server=${k8sServer} \
                             --insecure-skip-tls-verify \
                             apply -f /tmp/k8s/green-active.yaml
                         """
 
-                        echo "==> Waiting for Health Checks..."
+                        echo "==> Checking Status..."
                         sh """
-                            docker run --rm --net=host \
-                            -v ${KUBECONFIG_FILE}:/tmp/kubeconfig \
-                            -v ${WORKSPACE}/k8s:/tmp/k8s \
+                            cat ${KUBECONFIG_FILE} | docker run --rm -i --net=host \
                             bitnami/kubectl:latest \
-                            --kubeconfig=/tmp/kubeconfig \
+                            --kubeconfig=/dev/stdin \
                             --server=${k8sServer} \
                             --insecure-skip-tls-verify \
                             rollout status deployment/aceest-fitness-green
                         """
 
-                        // ... (Continue with manual gate and traffic switch using the same sh blocks)
+                        input message: "Green version is healthy. Switch traffic?", ok: "Promote"
+
+                        echo "==> Switching traffic..."
+                        sh """
+                            cat ${KUBECONFIG_FILE} | docker run --rm -i --net=host \
+                            bitnami/kubectl:latest \
+                            --kubeconfig=/dev/stdin \
+                            --server=${k8sServer} \
+                            --insecure-skip-tls-verify \
+                            patch svc aceest-fitness-service -p '{\"spec\":{\"selector\":{\"env\":\"green\"}}}'
+                        """
                     }
                 }
             }
