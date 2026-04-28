@@ -68,7 +68,8 @@ pipeline {
                 
                 echo "==> Verifying Docker image..."
                 sh "docker images ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                sh "docker images ${DOCKER_NAME}"
+                // Change DOCKER_NAME to DOCKER_IMAGE here:
+                sh "docker images ${DOCKER_IMAGE}" 
             }
         }
 
