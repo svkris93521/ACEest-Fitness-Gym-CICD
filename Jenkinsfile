@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         // Defines the Docker image repository explicitly
-        DOCKER_IMAGE = "aceest-fitness-gym-cicd"
+        DOCKER_IMAGE = "svkris/aceest-fitness-gym-cicd" 
         DOCKER_TAG = "${env.BUILD_ID}"
         DOCKER_CREDS_ID = "dockerhub-credentials" // Jenkins credentials ID for Docker Hub
         CLUSTER_ENV = "minikube"
@@ -77,6 +77,25 @@ pipeline {
                 echo "==> Final Cleanup: Removing dangling images..."
                 // This removes old, untagged layers to save disk space
                 sh "docker image prune -f"
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    echo "==> Logging into Docker Hub using Secret Token..."
+                    // We only need to pull the 'Secret Text' here
+                    withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKER_TOKEN')]) {
+                        
+                        // Use the token variable to authenticate
+                        sh "echo ${DOCKER_TOKEN} | docker login -u svkris --password-stdin"
+                        
+                        echo "==> Pushing images..."
+                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        sh "docker push ${DOCKER_IMAGE}:latest"
+                        
+                        sh "docker logout"
+                    }
+                }
             }
         }
     }
