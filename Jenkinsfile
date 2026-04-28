@@ -63,16 +63,22 @@ pipeline {
 
         stage('Docker Image Assembly') {
             steps {
+                echo "==> Cleaning up old images..."
+                // Remove the previous 'latest' to ensure a fresh tag
+                sh "docker rmi ${DOCKER_IMAGE}:latest || true"
+
                 echo "==> Building Docker image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} -t ${DOCKER_IMAGE}:latest ."
                 
                 echo "==> Verifying Docker image..."
                 sh "docker images ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                // Change DOCKER_NAME to DOCKER_IMAGE here:
-                sh "docker images ${DOCKER_IMAGE}" 
+                sh "docker images ${DOCKER_IMAGE}:latest"
+
+                echo "==> Final Cleanup: Removing dangling images..."
+                // This removes old, untagged layers to save disk space
+                sh "docker image prune -f"
             }
         }
-
     }
     
     post {
