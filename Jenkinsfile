@@ -104,11 +104,13 @@ pipeline {
             steps {
                 script {
                     def k8sServer = "https://host.docker.internal:8443"
-
-                    sh "if [ -d '${WORKSPACE}/k8s/kubeconfig' ]; then rm -rf '${WORKSPACE}/k8s/kubeconfig'; fi"
                     
                     // 1. Prepare the dynamic YAML
-                    sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml"
+                    sh """
+                        rm -rf k8s/kubeconfig
+                        cp /root/.kube/config k8s/kubeconfig || echo "Using existing workspace config"
+                        sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml
+                    """
 
                     echo "==> Deploying to Minikube..."
                     // We mount the WHOLE k8s folder. 
