@@ -103,6 +103,7 @@ pipeline {
             agent any
             steps {
                 script {
+                    sh "cp /root/minikube-flat-config ${WORKSPACE}/k8s/kubeconfig"
                     def k8sServer = "https://host.docker.internal:8443"
                     
                     echo "==> Preparing Green Deployment with Tag: ${DOCKER_TAG}"
