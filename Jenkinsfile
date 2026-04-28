@@ -98,21 +98,57 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Minikube') {
+        stage('Deploy: Blue-Green') {
+            agent any
             steps {
                 script {
-                    echo "Using a temporary container to run kubectl..."
+                    // Define the Minikube API server URL for your Mac
+                    def k8sServer = "https://host.docker.internal:8443"
                     
-                    // We run kubectl inside a container via the shell
-                    // --net=host allows it to see host.docker.internal (your Mac)
+                    // 1. Prepare the Green Deployment YAML by injecting the new Docker Tag
+                    echo "==> Preparing Green Deployment with Tag: ${DOCKER_TAG}"
+                    sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml"
+
+                    // 2. Deploy the Green Version
+                    echo "==> Deploying Green Version..."
                     sh """
                         docker run --rm --net=host \
                         -v ${HOME}/.kube:/root/.kube:ro \
+                        -v ${HOME}/.minikube:${HOME}/.minikube:ro \
                         bitnami/kubectl:latest \
-                        --server=https://host.docker.internal:8443 \
+                        --server=${k8sServer} \
                         --insecure-skip-tls-verify \
-                        get nodes
+                        apply -f k8s/green-active.yaml
                     """
+
+                    // 3. Wait for Readiness (Health Checks)
+                    echo "==> Waiting for Green pods to pass health checks..."
+                    sh """
+                        docker run --rm --net=host \
+                        -v ${HOME}/.kube:/root/.kube:ro \
+                        -v ${HOME}/.minikube:${HOME}/.minikube:ro \
+                        bitnami/kubectl:latest \
+                        --server=${k8sServer} \
+                        --insecure-skip-tls-verify \
+                        rollout status deployment/aceest-fitness-green
+                    """
+
+                    // 4. Manual Approval Gate (Optional but recommended for testing)
+                    input message: "Green version is healthy. Switch production traffic?", ok: "Promote"
+
+                    // 5. THE SWITCH: Patch the Service to point to Green
+                    echo "==> Switching production traffic to Green..."
+                    sh """
+                        docker run --rm --net=host \
+                        -v ${HOME}/.kube:/root/.kube:ro \
+                        -v ${HOME}/.minikube:${HOME}/.minikube:ro \
+                        bitnami/kubectl:latest \
+                        --server=${k8sServer} \
+                        --insecure-skip-tls-verify \
+                        patch svc aceest-fitness-service -p '{\"spec\":{\"selector\":{\"env\":\"green\"}}}'
+                    """
+                    
+                    echo "==> Blue-Green Promotion Successful!"
                 }
             }
         }
