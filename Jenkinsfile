@@ -120,12 +120,9 @@ pipeline {
                         // - We pipe the Manifest (the Deployment) as the standard input.
                         sh """
                             echo '${manifestContent}' | docker run --rm -i --net=host \
-                            -e KUBE_DATA="\$(cat ${KUBECONFIG_FILE})" \
+                            -e KUBECONFIG_DATA="\$(cat ${KUBECONFIG_FILE})" \
                             bitnami/kubectl:latest \
-                            --kubeconfig=/dev/shm/config \
-                            --server=${k8sServer} \
-                            --insecure-skip-tls-verify \
-                            sh -c "echo \"\$KUBE_DATA\" > /dev/shm/config && kubectl apply -f -"
+                            /bin/bash -c "echo \"\$KUBECONFIG_DATA\" > /tmp/config && export KUBECONFIG=/tmp/config && kubectl apply --server=${k8sServer} --insecure-skip-tls-verify -f -"
                         """
 
                         echo "==> Checking Status..."
