@@ -98,22 +98,28 @@ pipeline {
                 }
             }
         }
-        stage('Blue-Green Switch') {
+        stage('Deploy to Minikube') {
+            agent {
+                docker {
+                    // This image comes pre-loaded with kubectl
+                    image 'bitnami/kubectl:latest'
+                    // We tell this container to use the host's network to find Minikube
+                    args '--network host -u 0'
+                }
+            }
             steps {
                 script {
-                    echo "Deploying Green environment..."
-                    // Inject the version tag into the deployment file
-                    sh "sed -i 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml"
-                    sh "kubectl apply -f k8s/blue-green.yaml"
+                    // We pass the Minikube credentials as a secret or file 
+                    // BUT, a simpler way for local dev is to point to the host IP
+                    sh "kubectl config set-cluster minikube --server=https://host.docker.internal:8443 --insecure-skip-tls-verify"
+                    sh "kubectl config set-context minikube --cluster=minikube"
+                    sh "kubectl config use-context minikube"
 
-                    // Wait for Green pods to pass readiness probes
-                    sh "kubectl rollout status deployment/aceest-fitness-green"
-
-                    // THE SWITCH: Patch the service selector to point to green
-                    echo "Promoting Green to Production..."
-                    sh "kubectl patch svc aceest-fitness-service -p '{\"spec\":{\"selector\":{\"env\":\"green\"}}}'"
+                    echo "Testing connection..."
+                    sh "kubectl get nodes"
                     
-                    echo "Deployment successful. To rollback, patch back to 'blue'."
+                    echo "Applying Blue-Green Strategy..."
+                    sh "kubectl apply -f k8s/blue-green.yaml"
                 }
             }
         }
