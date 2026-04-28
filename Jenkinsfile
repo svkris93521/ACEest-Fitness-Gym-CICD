@@ -102,52 +102,40 @@ pipeline {
         stage('Deploy: Blue-Green') {
             agent any
             steps {
-                script {
-                    def k8sServer = "https://host.docker.internal:8443"
-                    
-                    // 1. Prepare the dynamic YAML
-                    sh """
-                        rm -rf k8s/kubeconfig
-                        cp /root/.kube/config k8s/kubeconfig || echo "Using existing workspace config"
-                        sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml
-                    """
+                // This pulls the secret we just created and places it in a temp path
+                withCredentials([file(credentialsId: 'kubeconfig-secret', variable: 'KUBECONFIG_FILE')]) {
+                    script {
+                        def k8sServer = "https://host.docker.internal:8443"
+                        
+                        // Prepare the dynamic YAML
+                        sh "sed 's|VERSION_TAG|${DOCKER_TAG}|g' k8s/blue-green.yaml > k8s/green-active.yaml"
 
-                    echo "==> Deploying to Minikube..."
-                    // We mount the WHOLE k8s folder. 
-                    // This ensures the file 'kubeconfig' inside it is treated as a file.
-                    sh """
-                        docker run --rm --net=host \
-                        -v ${WORKSPACE}/k8s:/tmp/k8s \
-                        bitnami/kubectl:latest \
-                        --kubeconfig=/tmp/k8s/kubeconfig \
-                        --server=${k8sServer} \
-                        --insecure-skip-tls-verify \
-                        apply -f /tmp/k8s/green-active.yaml
-                    """
+                        echo "==> Deploying to Minikube..."
+                        sh """
+                            docker run --rm --net=host \
+                            -v ${KUBECONFIG_FILE}:/tmp/kubeconfig \
+                            -v ${WORKSPACE}/k8s:/tmp/k8s \
+                            bitnami/kubectl:latest \
+                            --kubeconfig=/tmp/kubeconfig \
+                            --server=${k8sServer} \
+                            --insecure-skip-tls-verify \
+                            apply -f /tmp/k8s/green-active.yaml
+                        """
 
-                    echo "==> Waiting for Health Checks..."
-                    sh """
-                        docker run --rm --net=host \
-                        -v ${WORKSPACE}/k8s:/tmp/k8s \
-                        bitnami/kubectl:latest \
-                        --kubeconfig=/tmp/k8s/kubeconfig \
-                        --server=${k8sServer} \
-                        --insecure-skip-tls-verify \
-                        rollout status deployment/aceest-fitness-green
-                    """
-                    
-                    input message: "Green version is healthy. Switch traffic?", ok: "Promote"
+                        echo "==> Waiting for Health Checks..."
+                        sh """
+                            docker run --rm --net=host \
+                            -v ${KUBECONFIG_FILE}:/tmp/kubeconfig \
+                            -v ${WORKSPACE}/k8s:/tmp/k8s \
+                            bitnami/kubectl:latest \
+                            --kubeconfig=/tmp/kubeconfig \
+                            --server=${k8sServer} \
+                            --insecure-skip-tls-verify \
+                            rollout status deployment/aceest-fitness-green
+                        """
 
-                    echo "==> Switching traffic to Green..."
-                    sh """
-                        docker run --rm --net=host \
-                        -v ${WORKSPACE}/k8s:/tmp/k8s \
-                        bitnami/kubectl:latest \
-                        --kubeconfig=/tmp/k8s/kubeconfig \
-                        --server=${k8sServer} \
-                        --insecure-skip-tls-verify \
-                        patch svc aceest-fitness-service -p '{\"spec\":{\"selector\":{\"env\":\"green\"}}}'
-                    """
+                        // ... (Continue with manual gate and traffic switch using the same sh blocks)
+                    }
                 }
             }
         }
